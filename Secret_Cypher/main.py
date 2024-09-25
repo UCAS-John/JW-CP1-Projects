@@ -1,23 +1,31 @@
 #John Wangwang ProficiencyTest: Secret Cypher
 
 def encode(string: str, shift: int) -> str:
-    string = string.upper()
-    strings = list(string)
-    for i in range(len(string)):
-        Ascii = ord(string[i]) + shift
-        if Ascii > ord('Z'):
-            Ascii
-        strings[i] = chr(Ascii)
-    cipher = "".join(strings)
+
+    cipher = ""
+
+    for char in string:
+        if char.isupper():
+            Ascii = chr((ord(char) + shift - 65) % 26 + 65)
+            cipher += Ascii
+        elif char.islower():
+            Ascii = chr((ord(char) + shift - 97) % 26 + 97)
+            cipher += Ascii
+
     return cipher
 
 def decode(string: str, shift: int) -> str:
-    string = string.upper()
-    strings = list(string)
-    for i in range(len(string)):
-        Ascii = ord(string[i]) - shift
-        strings[i] = chr(Ascii)
-    cipher = "".join(strings)
+
+    cipher = ""
+
+    for char in string:
+        if char.isupper():
+            Ascii = chr((ord(char) - shift - 65) % 26 + 65)
+            cipher += Ascii
+        elif char.islower():
+            Ascii = chr((ord(char) - shift - 97) % 26 + 97)
+            cipher += Ascii
+            
     return cipher
 
 choice = int(input("""1. Encode Cipher
@@ -29,8 +37,8 @@ shiftValue = int(input("Enter amount of shift: "))
 
 print(f"Before: {code}")
 if choice == 1:
-    print(f"After {encode(code, shiftValue)}")
+    print(f"After encoded with {shiftValue} shift: {encode(code, shiftValue)}")
 elif choice == 2:
-    print(f"After {decode(code, shiftValue)}")
+    print(f"After decoded with {shiftValue} shift: {decode(code, shiftValue)}")
 else:
     print("Error please enter the corresponding number!")
