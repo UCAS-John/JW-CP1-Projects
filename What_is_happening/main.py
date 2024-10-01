@@ -45,38 +45,49 @@ def main():
         
         choice = input("Enter your choice (1-5): ") #Ask user for their choice
         
-        if choice == '1': #Check if choice is 1
+        if choice == '1': #Check if choice is 1 the create an account for user
             account = create_account()
             accounts[account.account_number] = account
             print(f"Account {account.account_number} created successfully!")
         
-        elif choice in ['2', '3', '4']:
-            account_number = input("Enter account number: ")
-            if account_number in accounts:
-                account = accounts[account_number]
-                if choice == '2':
-                    amount = float(input("Enter deposit amount: "))
+        elif choice in ['2', '3', '4']: #if Choice is is 2,3,4
+
+            account_number = input("Enter account number: ") #Ask user for account number
+            if account_number in accounts: #Check if account exist
+                account = accounts[account_number] #Assign account varaible to Accout class with account_number
+
+                if choice == '2': #if Choice is is 2 Deposit the money in to the Account
+                    amount = float(input("Enter deposit amount: ")) #Ask user for desposit amount
+
+                    #Check if user desposit amount is valid 
                     if account.deposit(amount):
                         print(f"Deposited ${amount:.2f} successfully!")
                     else:
                         print("Invalid deposit amount.")
-                elif choice == '3':
-                    amount = float(input("Enter withdrawal amount: "))
+
+                elif choice == '3': #if Choice is is 3 withdrawn the money from the Account
+                    amount = float(input("Enter withdrawal amount: ")) #Ask user for withdraw amount
+
+                    #Check if user have enough money in Account
                     if account.withdraw(amount):
                         print(f"Withdrawn ${amount:.2f} successfully!")
                     else:
                         print("Invalid withdrawal amount or insufficient funds.")
+                #if choice 4 Print Current Account balance
                 else:
                     print(f"Current balance: ${account.get_balance():.2f}")
+                    
+            #Error if accout not found
             else:
                 print("Account not found.")
         
-        elif choice == '5':
+        elif choice == '5': #if choice is 5 exit the program
             print("Thank you for using our banking system. Goodbye!")
             break
         
-        else:
-            print("Invalid choice. Please try again.")
+        else: 
+            print("Invalid choice. Please try again.") #Print error message if choice not in range 1 to 5
 
+#Run Program
 if __name__ == "__main__":
     main()
