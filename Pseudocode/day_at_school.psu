@@ -1,0 +1,40 @@
+START  School
+    START Computer Science class
+    END Computer Science class
+
+    BREAK
+
+    START American Civilization class
+    END American Civilization class
+
+    BREAK
+
+    START Math  class
+    END
+    START Advisory class
+        IF have math homework
+            do math homework
+        ELSE IF have American Civilization homework
+            do American Civilization homework
+        ELSE
+            Read a book
+    END
+
+    BREAK
+        eat lunch
+    END
+
+    START English class
+    END English class
+
+    BREAK
+
+    START Chemistry class
+    END Chemistry class
+
+    BREAK
+
+    START Health class
+    END Health class
+
+END School
