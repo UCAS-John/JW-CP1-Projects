@@ -1,4 +1,7 @@
 START  School
+
+    SET lunch to today lunch
+
     START Computer Science class
     END Computer Science class
 
@@ -10,7 +13,8 @@ START  School
     BREAK
 
     START Math  class
-    END
+    END Math  class
+
     START Advisory class
         IF have math homework
             do math homework
@@ -18,7 +22,7 @@ START  School
             do American Civilization homework
         ELSE
             Read a book
-    END
+    END Advisory class
 
     BREAK
         eat lunch

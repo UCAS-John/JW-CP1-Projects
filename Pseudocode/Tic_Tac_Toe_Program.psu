@@ -1,0 +1,26 @@
+SET game to not end
+
+WHILE game is not end
+
+    GET user input
+    SET cross to user input
+
+    play cross in tic tac toe board
+    
+    SET nought to computer decision
+
+    play nought in tic tac toe board
+
+    IF nought is 3 in a row
+        computer win
+        SET game to end
+        STOP 
+    ELSE IF cross is 3 in a row
+        user win
+        SET game to end
+        STOP
+    ELSE IF tic tac toe board is full AND neither cross nor nought win
+        game draw
+        STOP
+    ELSE
+        continue the game

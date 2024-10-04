@@ -1,0 +1,16 @@
+get out of my home
+drive a car to store
+
+IF store is CLOSE
+    go back to home
+    STOP
+ELSE
+    enter the store
+
+SET cart
+
+put every selected items in cart
+check out every items in cart
+pay the cashier
+get out of the store
+go home

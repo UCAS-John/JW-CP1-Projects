@@ -1,0 +1,13 @@
+wake up 
+make a bed
+take a shower
+
+SET breakfast to today breakfast
+
+eat breakfast
+
+IF today is weekend day or a holiday
+    Watch TV
+ELSE
+    get ready for school
+
