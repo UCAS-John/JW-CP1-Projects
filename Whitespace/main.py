@@ -45,7 +45,7 @@ def face_challenge():
         
 def play_game():
     display_intro()
-    
+
     treasure_found=False
 
     while not treasure_found:
@@ -61,7 +61,6 @@ def play_game():
         else:
             print("No treasure here. Keep searching!")
     elif choice==3:
-            
             if face_challenge():
                 if random.random()<0.4:
                     find_treasure()
