@@ -6,8 +6,10 @@ def display_intro():
     print("Your goal is to find the hidden treasure and escape safely.")
 
 def make_choice(options):
+
     for i,option in enumerate(options,1):
         print(f"{i}. {option}")
+
     while True:
         try:
             choice = int(input("Enter your choice: "))
@@ -29,7 +31,9 @@ def find_treasure():
 
 def face_challenge():
     print("Oh no! You've encountered a challenge!")
+
     challenges=["A giant spider blocks your path.","A riddle-speaking owl demands an answer.","A magical barrier requires a spell to pass."]
+
     print(random.choice(challenges))
 
     if random.random()<0.5:
@@ -41,6 +45,7 @@ def face_challenge():
         
 def play_game():
     display_intro()
+    
     treasure_found=False
 
     while not treasure_found:
