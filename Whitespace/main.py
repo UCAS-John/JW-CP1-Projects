@@ -1,3 +1,5 @@
+#John Wangwang ProficiencyTest: I Can't Read This!
+
 import random
 
 def display_intro():
@@ -7,12 +9,13 @@ def display_intro():
 
 def make_choice(options):
 
-    for i,option in enumerate(options,1):
+    for i,option in enumerate(options, 1):
         print(f"{i}. {option}")
 
     while True:
         try:
             choice = int(input("Enter your choice: "))
+
             if 1 <= choice <= len(options):
                 return choice
             else:
@@ -22,7 +25,9 @@ def make_choice(options):
     
 def explore_forest():
     print("You venture deeper into the forest...")
+
     events=["You encounter a friendly woodland creature.","You find a shimmering portal.","You discover an ancient ruins.","You come across a bubbling stream."]
+
     print(random.choice(events))
 
 def find_treasure():
@@ -36,7 +41,7 @@ def face_challenge():
 
     print(random.choice(challenges))
 
-    if random.random()<0.5:
+    if random.random() < 0.5:
         print("You successfully overcome the challenge!")
         return True
     else:
@@ -50,22 +55,25 @@ def play_game():
 
     while not treasure_found:
         print("\nWhat would you like to do?")
+
         choice=make_choice(["Explore the forest","Search for treasure","Face a challenge","Exit the forest"])
 
-    if choice==1:
+    if choice == 1:
         explore_forest()
-    elif choice==2:
-        if random.random()<0.3:
+    elif choice == 2:
+        if random.random() < 0.3:
             find_treasure()
+
             treasure_found=True
         else:
             print("No treasure here. Keep searching!")
-    elif choice==3:
+    elif choice == 3:
             if face_challenge():
-                if random.random()<0.4:
+                if random.random() < 0.4:
                     find_treasure()
-                    treasure_found=True
-                elif choice==4:
+                    
+                    treasure_found = True
+                elif choice == 4:
                     print("You decide to leave the forest. Game over!")
                     return
             
