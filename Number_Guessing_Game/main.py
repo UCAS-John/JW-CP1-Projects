@@ -5,7 +5,7 @@ import random
 def check(answer: int, number: int) -> bool:
     """
     Get in guess number and compare number as integers
-    return boolean
+    return boolean data type
     return TRUE if they are the same
     return FLASE if they are different
     """
@@ -17,8 +17,8 @@ def check(answer: int, number: int) -> bool:
 def diff(answer: int, number: int) -> str:
     """
     Get in guess number and compare number as integers
+    return string data type
     Compare the number if they are too high or too Low
-    return strings
     """
     if answer == number:
         return "Correct"
