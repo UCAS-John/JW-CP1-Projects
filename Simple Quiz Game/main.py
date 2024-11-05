@@ -19,3 +19,8 @@ def main():
 
         answer = input("Enter your ")
 
+        if check(answer):
+            continue
+        else:
+            
+
