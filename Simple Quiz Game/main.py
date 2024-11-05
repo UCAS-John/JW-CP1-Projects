@@ -35,13 +35,6 @@ easy_questions = [
      "answer" : "C"},
 ]
 
-def check(number, answer):
-
-    if answer[number] == answer:
-        return True
-    else:
-        return False
-
 def main():
 
     score = 0
