@@ -40,6 +40,7 @@ def game() -> dict:
         "draw" : False,
     }
 
+    #Check for draw
     if all(type(grid) is str for row in board for grid in row):
         result["draw"] = True
         return result
