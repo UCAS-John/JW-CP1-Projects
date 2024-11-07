@@ -32,20 +32,58 @@ def computer_play():
             if computer == grid:
                 board[row_index][grid_index] = "O"
 
-def check_state() -> dict:
+def game() -> dict:
 
     result = {
         "win" : False,
         "lose" : False,
-        "draw" : False
+        "draw" : False,
     }
 
-    for row in board:
-        if all(grid == row[0] for grid in row):
-            if row[0] == "O":
-                result["lose"] = True
-            else:
+    if all(type(grid) is str for row in board for grid in row):
+        result["draw"] = True
+        return result
+    
+    #Check column win
+    for (grid_index, grid) in enumerate(board[0]):
+            if grid == board[1][grid_index] and grid == board[2][grid_index]:
+                if board[0][grid_index] == "X":
+                    result["win"] = True
+                    return result
+                elif board[0][grid_index] == "O":
+                    result["lose"] = True
+                    return result
+
+    #Check row win
+    for (row_index, row) in enumerate(board):
+        if all(grid == board[row_index][0] for grid in row):
+            if board[0][grid_index] == "X":
                 result["win"] = True
+                return result
+            elif board[0][grid_index] == "O":
+                result["lose"] = True
+                return result
+    
+    #Check Diagonal win
+    for (row_index, row) in enumerate(board):
+        for (grid_index, grid) in enumerate(row):
+            if grid_index == 0 and row_index == 0:
+                if grid == board[1][1] and grid == board[2][2]:
+                    if board[0][grid_index] == "X":
+                        result["win"] = True
+                        return result
+                    elif board[0][grid_index] == "O":
+                        result["lose"] = True
+                        return result
+            elif grid_index == 2 and row_index == 0:
+                if grid == board[1][1] and grid == board[2][0]:
+                    if board[0][grid_index] == "X":
+                        result["win"] = True
+                        return result
+                    elif board[0][grid_index] == "O":
+                        result["lose"] = True
+                        return result
+    return result
 
 def main():
     
@@ -55,8 +93,9 @@ def main():
     print("You will play as X and Computer will play as O.")
     print("This is the current board.")
 
+    print_board()
+
     while True:
-        print_board()
 
         while True:
 
@@ -82,6 +121,21 @@ def main():
 
         user_play(user)
         computer_play()
+        print_board()
+
+        result = game()
+
+        if result["draw"]:
+            print("The game is draw!")
+            break
+        elif result["win"]:
+            print("You won the game!")
+            break
+        elif result["lose"]:
+            print("You lost the game!")
+            break
+        else:
+            continue
 
 
 
