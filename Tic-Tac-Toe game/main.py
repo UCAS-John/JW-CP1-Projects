@@ -25,12 +25,18 @@ def user_play(user: int):
     
 def computer_play():
 
-    computer = random.randint(1,9)
+    while True:
+        computer = random.randint(1,9)
 
-    for (row_index, row) in enumerate(board):
-        for (grid_index, grid) in enumerate(row):
-            if computer == grid:
-                board[row_index][grid_index] = "O"
+        for (row_index, row) in enumerate(board):
+            for (grid_index, grid) in enumerate(row):
+                if computer == grid:
+                    if board[row_index][grid_index] is int:
+                        board[row_index][grid_index] = "O"
+                        return
+                    else: 
+                        continue
+
 
 def game() -> dict:
 
