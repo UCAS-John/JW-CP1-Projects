@@ -1,7 +1,7 @@
 
 def histogram(number: list):
     for (i, num) in enumerate(number):
-        print(f"{i}:", end = "")
+        print(f"{i+1}:", end = "")
         for j in range(num):
             print("*", end = "")
         print("")
