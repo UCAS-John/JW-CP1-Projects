@@ -12,7 +12,7 @@ def line():
 
 def main():
 
-    num_list = list(range(1,13))s
+    num_list = list(range(1,13))
 
     line()
     print("\n   |", end="")
