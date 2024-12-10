@@ -1,4 +1,5 @@
 import random
+import time
 
 class Player:
     def __init__(self, name, health, endurance, speed, mana, damage, crit_damage, crit_chance, coins, weapon, armor):
@@ -13,7 +14,10 @@ class Player:
         self.coins = coins
         self.weapon = weapon
         self.armor = armor
-        self.inventory = []
+        self.inventory = {
+            "Healing Potion": 0,
+            "Mana Potion": 0
+        }
         self.dead_count = 0
         self.location = "Start"
         self.exp = 0
@@ -25,6 +29,10 @@ class Player:
             "Stunt": {"mana": 30, "damage": 40},
             "Heal": {"mana": 0, "damage": 30},
         }
+    
+    def rest(self):
+        self.health += (self.health*0.15)
+        self.mana += (self.health*0.15)
 
     def attack(self, skill):
         if random.random() < (self.crit_chance / 100):
@@ -42,8 +50,29 @@ class Player:
             self.health -= damage_take
             print(f"{self.name} take {damage_take}!")
 
-    def add_to_inventory(self, item):
-        self.inventory.append(item)
+    def add_to_inventory(self, types, item):
+        if types == "coins":
+            self.coins += item
+            return
+        elif types == "exp":
+            self.earn_exp(item)
+            return
+        elif types == "essence":
+            if item == "damage":
+                self.damage *= 1.2
+            elif item == "crit chance":
+                self.crit_chance += 20
+            elif item == "crit damage":
+                self.crit_damage += 100
+            elif item == "health":
+                self.health *= 1.2
+            else:
+                self.speed += 10
+        elif types == "Healing Potion" or types == "Mana Potion":
+            self.inventory[types] += item
+        else:
+            self.inventory.append(item)
+            return
 
     def upgrade(self, stat):
         setattr(self, stat, getattr(self, stat) + self.upgrade_points)
@@ -129,12 +158,6 @@ class Room:
             self.combat(player)
             self.monster_defeated = True
         
-        if self.loot and not self.item_picked_up:
-            print(f"You found: {', '.join(self.loot)}")
-            for item in self.loot:
-                player.add_to_inventory(item)
-            self.item_picked_up = True
-        
         if self.monster != None:
             self.combat(player)
 
@@ -172,6 +195,13 @@ class Room:
         else:
             print(f"You defeated the {self.monster.name}")
             self.monster_defeated = True
+        
+        if self.loot and not self.item_picked_up:
+            print("You get rewards for killing monster:")
+            for item, types in self.loot.items():
+                print(f"{types}: {item}")
+                player.add_to_inventory(types, item)
+            self.item_picked_up = True
 
     def solve_puzzle(self, player):
         print(self.puzzle)
@@ -230,21 +260,33 @@ rooms = {
     "Start": Room(
         name="Raft",
         description="A small raft floating on the ocean, surrounded by mist.",
-        loot=["Wooden Sword", "Leather Armor", "Strength Essence", "50 coins", "50 exp"],
+        loot={"Wooden Sword": "weapons", 
+            "Leahter Armor": "armor",
+            "essence": "damage", 
+            "coins": 50,
+            "exp": 50},
         monster="Sea Serpent",
         connections={"North": "Beach", "East": "Lava Pit"}
     ),
     "Beach": Room(
         name="Beach",
         description="A peaceful beach with golden sand, waves crashing gently.",
-        loot=["Health Potion", "Shell Sword", "Crit Chance Essence", "60 coins", "100 exp"],
+        loot={"Shell Sword": "sword", 
+            "Healing Potion": 1,
+            "essence": "crit chance", 
+            "coins": 60,
+            "exp": 100},
         monster="Crab King",
         connections={"South": "Start", "North": "Cavern", "West": "Merchant's Hut"}
     ),
     "Jungle": Room(
         name="Jungle",
         description="A dense jungle with tall trees, birds chirping in the distance, and mysterious rustling sounds.",
-        loot=["Health Essence", "Mana Potion", "Jungle Armor", "80 coins", "100 exp"],
+        loot={"Jungle Armor": "armor", 
+            "Mana Potion": 1,
+            "essence": "health", 
+            "coins": 80,
+            "exp": 100},
         monster="Jungle Tiger",
         puzzle="Solve a riddle to progress.",
         connections={"South": "Lava Pit", "North": "Temple"}
@@ -252,7 +294,8 @@ rooms = {
     "Merchant's Hut": Room(
         name="Merchant's Hut",
         description="A small, cozy hut where a merchant sells various items.",
-        loot=["Magic Potions", "Sapphire", "150 exp"],
+        loot={"gemstone": "Sapphire", 
+            "exp": 150},
         monster=None,
         merchant=True,
         connections={"East": "Beach"}
@@ -260,21 +303,27 @@ rooms = {
     "Temple": Room(
         name="Temple",
         description="An ancient stone temple covered in vines, emitting a faint glow.",
-        loot=["Ruby", "Secret Key", "200 exp"],
+        loot={"gemstone": "Ruby", 
+            "key": "Secret Key",
+            "exp": 200},
         monster="Golem Guardian",
         connections={"South": "Jungle", "North": "Mountain", "West": "Cavern"}
     ),
     "Mountain": Room(
         name="Mountain",
         description="A steep mountain peak with icy winds howling around you.",
-        loot=["Jade", "Iron Shield", "400 exp"],
+        loot={"gemstone": "Jade", 
+            "skill": "iron shield",
+            "exp": 400},
         monster="Ice Dragon",
         connections={"South": "Temple", "West": "Hidden Cave", "North": "Lair"}
     ),
     "Hidden Cave": Room(
         name="Hidden Cave",
         description="A dark cave with echoes of mysterious sounds and sparkling crystals.",
-        loot=["Crit Damage Essence", "1000 coins", "300 exp"],
+        loot={"essence": "crit damage", 
+            "coins": "1000",
+            "exp": 300},
         monster=None,
         puzzle="Solve the crystal alignment puzzle to access treasure.",
         requirement="Secret Key",
@@ -283,46 +332,53 @@ rooms = {
     "Cavern": Room(
         name="Cavern",
         description="A damp, dark cavern with strange echoes.",
-        loot=["Speed Essence", "200 coins", "200 exp"],
+        loot={"essence": "speed", 
+            "coins": 200,
+            "exp": 200},
         monster="Cave Bat",
         connections={"West": "Start", "East": "Lava Pit"}
     ),
     "Lava Pit": Room(
         name="Lava Pit",
         description="A dangerous pit of bubbling lava, with scorching heat.",
-        loot=["200 coins", "500 exp"],
+        loot={ "coins": 200,
+            "exp": 500},
         monster="Fire Drake",
         puzzle="Find the safe path across the lava.",
         connections={"North": "Jungle", "West": "Start"}
     ),
-    "Lair": Room(
+    "Dragon's Lair": Room(
         name="Dragon's Lair",
         description="A vast cavern with treasure hoards and dragon bones scattered around.",
-        loot=["Victory"],
+        loot="Victory",
         monster="Dragon King",
         connections={"South": "Mountain"}
     ),
 }
 
-# Game loop
-print("Welcome to the game!")
-username = input("Enter your name: ")
-player = Player(username, 100, 10, 50, 10, 50, 10)
+def main():
+    print("Welcome to the game!")
+    username = input("Enter your name: ")
+    player = Player(username, 100, 10, 50, 10, 50, 10)
 
-current_room = "Start"
-timer = 0  # Track the time in seconds
+    current_room = "Start"
+    timer = 0  # Track the time in seconds
 
-while player.dead_count < 3 and timer <= 1800:
-    action = input("What will you do? (explore/rest/upgrade): ").lower()
-    if action == "explore":
-        rooms[current_room].explore(player)
-    elif action == "rest":
-        # Implement rest functionality here (e.g., regenerate health or mana)
-        pass
-    elif action == "upgrade":
-        stat = input("Which stat would you like to upgrade? (health/speed/mana/damage): ").lower()
-        player.upgrade(stat)
+    while player.dead_count < 3 and timer <= 1800:
+        action = input("What will you do? (explore/rest/upgrade): ").lower()
+        if action == "explore":
+            rooms[current_room].explore(player)
+        elif action == "rest":
+            print("You are resting this action take 10 seconds!")
+            print("You rest and gain back 15% of hp and mana")
+            player.rest()
+        elif action == "upgrade":
+            stat = input("Which stat would you like to upgrade? (health/speed/mana/damage): ").lower()
+            player.upgrade(stat)
 
-    if player.health <= 0 or player.dead_count >= 3:
-        print("Game Over")
-        break
+        if player.health <= 0 or player.dead_count >= 3:
+            print("Game Over")
+            break
+
+if __name__ == "__main__":
+    main()
