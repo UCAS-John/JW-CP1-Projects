@@ -2,21 +2,23 @@ import random
 import time
 
 class Player:
-    def __init__(self, name, health, endurance, speed, mana, damage, crit_damage, crit_chance, coins, weapon, armor):
+    def __init__(self, name, health, endurance, speed, mana, damage, crit_damage, crit_chance, coins):
         self.name = name
+        self.max_health = health
         self.health = health
         self.endurance = endurance
         self.speed = speed
+        self.max_mana = mana
         self.mana = mana
         self.damage = damage
         self.crit_damage = crit_damage
         self.crit_chance = crit_chance
         self.coins = coins
-        self.weapon = weapon
-        self.armor = armor
+        self.weapon = None
+        self.armor = None
         self.inventory = {
-            "Healing Potion": 0,
-            "Mana Potion": 0
+            "healing potion": 0,
+            "mana potion": 0
         }
         self.dead_count = 0
         self.location = "Start"
@@ -24,29 +26,59 @@ class Player:
         self.upgrade_points = 0
         self.coins = 0
         self.skills = {
-            "Slash": {"mana": 0, "damage": 50},
-            "Fire": {"mana": 35, "damage": 100},
-            "Stunt": {"mana": 30, "damage": 40},
-            "Heal": {"mana": 0, "damage": 30},
+            "slash": {"mana": 0, "damage": 50},
+            "fire": {"mana": 35, "damage": 100},
+            "stunt": {"mana": 30, "damage": 40},
+            "heal": {"mana": 0, "damage": 30}
         }
-    
+
+    def open_inventory(self):
+        for item, amount in self.inventory.items():
+            print(f"{item}: {amount}")
+
+    def change_armor(self, armor):
+        self.max_health -= armors[self.armor].health
+        self.max_health += armors[armor].health
+        
     def rest(self):
-        self.health += (self.health*0.15)
-        self.mana += (self.health*0.15)
+        self.health += (self.max_health*0.15)
+        self.mana += (self.max_mana*0.15)
 
     def attack(self, skill):
-        if random.random() < (self.crit_chance / 100):
-            return self.damage * (1 + (self.crit_damage / 100)) * skill["damage"]
+
+        skill = skill.lower()
+
+        if self.weapon != None:
+            weapon = weapons[self.weapon]
+            damage = self.damage+weapon.damage
+            crit_chance = self.crit_chance+weapon.crit_chance
+            crit_damage = self.crit_damage+weapon.crit_damage
         else:
-            return self.damage * skill["damage"]
+            damage = self.damage
+            crit_damage = self.crit_damage
+            crit_chance = self.crit_chance
+
+        if random.random() < (crit_chance / 100):
+            return (damage) * (1 + (crit_damage / 100)) * self.skills[skill]["damage"]
+        else:
+            return damage * self.skills[skill]["damage"]
         
     def take_damage(self, monster_name):
-        diff = self.speed = monsters[monster_name].speed
+        if self.armor != None:
+            armor = armors[self.armor]
+            endurance = self.endurance+armor.endurance
+            speed = self.speed+armor.speed
+        else:
+            endurance = self.endurance
+            speed = self.speed
+
+        diff = speed - monsters[monster_name].speed
+
         if diff > 0:
             if random.random() < (diff / 100):
                 print(f"{self.name} dodge the attack!")
         else:
-            damage_take = monsters[monster_name].damage - (self.endurance*2)
+            damage_take = monsters[monster_name].damage - (endurance*2)
             self.health -= damage_take
             print(f"{self.name} take {damage_take}!")
 
@@ -70,9 +102,12 @@ class Player:
                 self.speed += 10
         elif types == "Healing Potion" or types == "Mana Potion":
             self.inventory[types] += item
-        else:
-            self.inventory.append(item)
-            return
+        elif types == "armor":
+            self.armor = item
+            self.max_health += armors[item].health
+        elif types == "weapon":
+            self.weapon = item
+            self.max_mana += weapons[item].mana
 
     def upgrade(self, stat):
         setattr(self, stat, getattr(self, stat) + self.upgrade_points)
@@ -85,13 +120,15 @@ class Player:
             self.exp = self.exp % 100
 
     def use_item(self, item):
-        if item in self.inventory:
+        if item in self.inventory and self.inventory[item] > 0:
             self.inventory.remove(item)
             if item == "Healing Potion":
                 self.health += 30
             elif item == "Mana Potion":
                 self.mana += 20
             print(f"Used {item}")
+        else:
+            print("Item unavailabe")
 
 class weapon:
     def __init__(self, damage, crit_chance, crit_damage, mana):
@@ -170,30 +207,45 @@ class Room:
         print(f"Available directions: {', '.join(self.connections)}")
         direction = input("Which direction do you want to go? ")
         if direction in self.connections:
-            player.location = direction
+            player.location = self.connections[direction]
         else:
             print("Invalid direction. Try again.")
 
     def combat(self, player):
-        print(f"Fighting {self.monster.name}")
-        while player.health > 0 and self.monster.health > 0:
-            action = input("Choose attack or potion: ")
+        print(f"Fighting {self.monster}")
+        monster = monsters[self.monster]
+        while player.health > 0 and monster.health > 0:
+
+            action = input("Choose attack or potion: ").lower()
+
             if action == "attack":
-                print(player.skills)
-                self.monster.health -= player.attack(player.skills)
+                while True:
+                    for skill in player.skills.keys(): 
+                        print(f"{skill}:")   
+                        print(f"mana: {player.skills[skill]["mana"]}\ndamage: {player.skills[skill]["damage"]}")
+                    choose_skill = input("Enter your skill: ")
+                    if not player.attack(choose_skill):
+                        print("Not enough mana\n Choose skill again!!!")
+                        continue
+                    else:
+                        monsters[self.monster].health -= player.attack(choose_skill)
+                        break
+
             elif action == "potion":
-                print(f"Potions in inventory: {player.inventory}")
-                item = input("Which potion do you want to use? ")
+                print("Potions in inventory:")
+                for potion, amount in player.inventory.items():
+                    print(f"{potion}: {amount}")
+                item = input("Which potion do you want to use? ").lower()
                 player.use_item(item)
 
-            if self.monster.health > 0:
+            if monsters[self.monster].health > 0:
                 player.take_damage(self.monster)
 
         if player.health <= 0:
             player.dead_count += 1
-            print(f"You were defeated by the {self.monster.name}")
+            print(f"You were defeated by the {self.monster}")
         else:
-            print(f"You defeated the {self.monster.name}")
+            print(f"You defeated the {self.monster}")
             self.monster_defeated = True
         
         if self.loot and not self.item_picked_up:
@@ -234,14 +286,14 @@ class Room:
 
 # Define monsters
 monsters = {
-    "Sea Serpent": Monster("Sea Serpent", 120, 15),
-    "Crab King": Monster("Crab King", 180, 20),
-    "Jungle Tiger": Monster("Jungle Tiger", 150, 25),
-    "Golem Guardian": Monster("Golem Guardian", 300, 30),
-    "Ice Dragon": Monster("Ice Dragon", 400, 45),
-    "Cave Bat": Monster("Cave Bat", 80, 10),
-    "Fire Drake": Monster("Fire Drake", 250, 40),
-    "Dragon King": Monster("Dragon King", 1000, 50),
+    "Sea Serpent": Monster("Sea Serpent", 120, 15, 10),
+    "Crab King": Monster("Crab King", 180, 20, 15),
+    "Jungle Tiger": Monster("Jungle Tiger", 150, 25, 30),
+    "Golem Guardian": Monster("Golem Guardian", 300, 30, 5),
+    "Ice Dragon": Monster("Ice Dragon", 400, 45, 30),
+    "Cave Bat": Monster("Cave Bat", 80, 10, 50),
+    "Fire Drake": Monster("Fire Drake", 250, 40, 30),
+    "Dragon King": Monster("Dragon King", 1000, 50, 60),
 }
 
 armors = {
@@ -251,17 +303,18 @@ armors = {
 }
 
 weapons = {
-    "Wooden Sword": weapon(10, 3, 10),
-    "Shell Sword": weapon(20, 10, 30),
-
+    "Wooden Sword": weapon(10, 3, 10, 50),
+    "Shell Sword": weapon(20, 10, 30, 100),
+    "Broken Dragon's sword": weapon(30, 20, 40, 150),
+    "Dragon's sword": weapon(50, 20, 80, 250)
 }
 
 rooms = {
     "Start": Room(
         name="Raft",
         description="A small raft floating on the ocean, surrounded by mist.",
-        loot={"Wooden Sword": "weapons", 
-            "Leahter Armor": "armor",
+        loot={"Wooden Sword": "weapon", 
+            "Leather Armor": "armor",
             "essence": "damage", 
             "coins": 50,
             "exp": 50},
@@ -271,7 +324,7 @@ rooms = {
     "Beach": Room(
         name="Beach",
         description="A peaceful beach with golden sand, waves crashing gently.",
-        loot={"Shell Sword": "sword", 
+        loot={"Shell Sword": "weapon", 
             "Healing Potion": 1,
             "essence": "crit chance", 
             "coins": 60,
@@ -357,15 +410,15 @@ rooms = {
 }
 
 def main():
-    print("Welcome to the game!")
+    print("You are just wake up the on a raft.\nReaching the Mainland you have to pass the dungeons to survive!")
     username = input("Enter your name: ")
-    player = Player(username, 100, 10, 50, 10, 50, 10)
+    player = Player(username, 100, 10, 50, 100, 50, 50, 5, 0)
 
     current_room = "Start"
     timer = 0  # Track the time in seconds
 
     while player.dead_count < 3 and timer <= 1800:
-        action = input("What will you do? (explore/rest/upgrade): ").lower()
+        action = input("What will you do? (explore/rest/upgrade/inventory): ").lower()
         if action == "explore":
             rooms[current_room].explore(player)
         elif action == "rest":
@@ -375,6 +428,8 @@ def main():
         elif action == "upgrade":
             stat = input("Which stat would you like to upgrade? (health/speed/mana/damage): ").lower()
             player.upgrade(stat)
+        elif action == "inventory":
+            player.open_inventory()
 
         if player.health <= 0 or player.dead_count >= 3:
             print("Game Over")
