@@ -259,12 +259,25 @@ class Room:
         if self.monster != None and not self.monster_defeated:
             self.combat(player)
 
-        if self.puzzle:
-            self.solve_puzzle(player)
+        if self.puzzle and not self.puzzle_fail:
+            print("You encounter a puzzle from the ancient age. You got one try")
+            if self.solve_puzzle():
+                print("You gain 50 coins and 150 exp for solving the puzzle!")
+                player.coins += 50
+                player.gain_exp(150)
+            else:
+                self.puzzle_fail = True
 
         if self.merchant:
-            self.interact_with_merchant(player)
+            print("You found merchant!")
+            choice = input("Do you want to interact with him (y/n): ").lower()
+            if choice == "y":
+                self.interact_with_merchant(player)
         
+        line()
+        if self.merchant:
+            print('Merchant: "comeback again if you interest in our goods!"')
+            line()
         print(f"Available directions:")
         for connect in self.connections.keys():
             if rooms[self.connections[connect]].visited == True:
@@ -272,6 +285,7 @@ class Room:
             else:
                 print(f"{connect}: Unknown")
         direction = input("Which direction do you want to go? ").lower()
+
         if direction in self.connections:
             player.previous_location = player.location
             player.location = self.connections[direction]
@@ -352,9 +366,9 @@ class Room:
             self.item_picked_up = True
             line()
 
-    def solve_puzzle(self, player):
-        # Lava Pit Puzzle
-        def solve_lava_pit():
+    def solve_puzzle(self):
+
+        if self.name == "Lava Pit":
             sequence = ["Fire", "Light", "Light"]
             user_sequence = []
             print("Clue:")
@@ -371,36 +385,27 @@ class Room:
             print("You crossed the lava pit successfully!")
             return True
 
-        lava_pit_puzzle = Puzzle("Lava Pit", "One step for fire, two steps for light...", solve_lava_pit)
+        if self.name == "Jungle":
 
-        # Jungle Puzzle
-        def solve_jungle_puzzle():
-            correct_sequence = ["C", "E", "G", "D", "A"]
-            user_sequence = []
+            correct_sequence = "CEGDA"
 
             print("Clue:")
             print("\"Nature’s melody unlocks the way,\nFollow the rhythm the jungle plays.\"")
             print("Listen carefully to the bird calls and reproduce the melody.")
+            print("Character arE Going Down the Aisle!")
 
-            while len(user_sequence) < len(correct_sequence):
-                note = input("Enter the next note (C, D, E, G, A): ").capitalize()
-                user_sequence.append(note)
+            user_sequence = input("Enter the note (no space)(C, D, E, G, A): ").capitalize()
 
-                if user_sequence != correct_sequence[:len(user_sequence)]:
-                    print("The vines tighten! You've chosen incorrectly. Resetting...")
-                    return False
+            if user_sequence != correct_sequence:
+                print("The vines tighten! You've chosen incorrectly. Resetting...")
+                return False
 
             print("The vines part, revealing a hidden path!")
             return True
-
-        jungle_puzzle = Puzzle("Jungle", "Nature’s melody unlocks the way...", solve_jungle_puzzle)
-
-        # Hidden Cave Puzzle
-        def solve_hidden_cave():
+        
+        if self.name == "Hidden Cave":
             print("Clue:")
             print("\"Reflect the truth, dispel the lies,\nAlign the crystals where light complies.\nThe key lies where red and blue collide.\"")
-
-            crystals = {"Red": False, "Blue": False, "Green": False, "Yellow": False}
 
             print("You see crystals: Red, Blue, Green, Yellow. Choose two to place.")
 
@@ -413,12 +418,6 @@ class Room:
             else:
                 print("The crystals fail to align. Try again.")
                 return False
-
-        hidden_cave_puzzle = Puzzle("Hidden Cave", "Reflect the truth, dispel the lies...", solve_hidden_cave)
-
-
-if __name__ == "__main__":
-    main()
 
 
     def interact_with_merchant(self, player):
@@ -496,13 +495,13 @@ class Monster:
 # Define monsters
 monsters = {
     "Sea Serpent": Monster("Sea Serpent", 120, 5, 25, 10),
-    "Crab King": Monster("Crab King", 180, 10, 20, 25),
-    "Jungle Tiger": Monster("Jungle Tiger", 150, 15, 40, 30),
-    "Golem Guardian": Monster("Golem Guardian", 300, 20, 20, 5),
-    "Ice Dragon": Monster("Ice Dragon", 400, 40, 40, 30),
-    "Cave Bat": Monster("Cave Bat", 80, 10, 30, 50),
-    "Fire Drake": Monster("Fire Drake", 250, 40, 50, 30),
-    "Dragon King": Monster("Dragon King", 1000, 50, 80, 60),
+    "Crab King": Monster("Crab King", 300, 10, 20, 25),
+    "Jungle Tiger": Monster("Jungle Tiger", 250, 15, 40, 30),
+    "Golem Guardian": Monster("Golem Guardian", 500, 20, 20, 5),
+    "Ice Dragon": Monster("Ice Dragon", 600, 40, 40, 30),
+    "Cave Bat": Monster("Cave Bat", 400, 10, 30, 50),
+    "Fire Drake": Monster("Fire Drake", 800, 40, 50, 30),
+    "Dragon King": Monster("Dragon King", 2500, 60, 80, 60),
 }
 
 armors = {
@@ -656,7 +655,7 @@ Can you uncover the island's secrets and escape before it's too late?""")
     line()
     print("Get Ready get your name and start your journey!")
     username = input("Enter your name: ")
-    player = Player(username, 100, 5, 50, 100, 40, 50, 5, 0)
+    player = Player(username, 100, 5, 10, 100, 50, 50, 5, 0)
     print(f"Welcome to the game {username}!\nChoose your action!")
 
     timer = 0  # Track the time in seconds
