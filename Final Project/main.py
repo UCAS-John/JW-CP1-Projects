@@ -230,8 +230,10 @@ class Player:
             elif item == "Mana Potion":
                 self.mana += 20
             print(f"Used {item}")
+            return True
         else:
             print("Item unavailabe")
+            return False
 
 class Room:
     def __init__(self, name, description, loot, monster, connections, requirement=None, puzzle=None, merchant=False, boss=False):
@@ -266,7 +268,7 @@ class Room:
         if self.monster != None and not self.monster_defeated:
             self.combat(player)
 
-        if self.puzzle and not self.puzzle_fail:
+        elif self.puzzle and not self.puzzle_fail:
             print("You encounter a puzzle from the ancient age. You got one try")
             if self.solve_puzzle():
                 print("You gain 50 coins and 150 exp for solving the puzzle!")
@@ -275,22 +277,23 @@ class Room:
             else:
                 self.puzzle_fail = True
 
-        if self.merchant:
+        elif self.merchant:
             print("You found merchant!")
             choice = input("Do you want to interact with him (y/n): ").lower()
             if choice == "y":
                 self.interact_with_merchant(player)
-        
-        line()
-        if self.merchant:
+
+        elif self.merchant:
+            line()
             print('Merchant: "comeback again if you interest in our goods!"')
             line()
-        print(f"Available directions:")
-        for connect in self.connections.keys():
-            if rooms[self.connections[connect]].visited == True:
-                print(f"{connect}: {self.connections[connect]}")
-            else:
-                print(f"{connect}: Unknown")
+        else: 
+            print(f"Available directions:")
+            for connect in self.connections.keys():
+                if rooms[self.connections[connect]].visited == True:
+                    print(f"{connect}: {self.connections[connect]}")
+                else:
+                    print(f"{connect}: Unknown")
         while True:
             direction = input("Which direction do you want to go? ").lower()
 
@@ -329,7 +332,9 @@ class Room:
                     line()
                     for skill in player.skills.keys(): 
                         print(f"{skill} | Mana {player.skills[skill]["mana"]} | Damage {player.skills[skill]["damage"]}")   
-                    choose_skill = input("Enter your skill: ").lower()
+                    choose_skill = input("Enter your skill (type 'return' to go back): ").lower()
+                    if choose_skill == "return":
+                        self.combat(player)
                     line()
                     if choose_skill not in player.skills.keys():
                         print("invalid skill")
@@ -341,14 +346,22 @@ class Room:
                         monsters[self.monster].health -= player.attack(choose_skill)
                         break
             elif action == "potion":
-                line()
-                print("Potions in inventory:")
-                for potion, amount in player.inventory.items():
-                    print(f"{potion}: {amount}")
-                item = input("Which potion do you want to use? ").lower()
-                player.use_item(item)
+                while True:
+                    line()
+                    print("Potions in inventory:")
+                    for potion, amount in player.inventory.items():
+                        print(f"{potion}: {amount}")
+                    item = input("Which potion do you want to use? (type 'return' to go back): ").lower()
+                    if item == "return":
+                        self.combat(player)
+                    if not player.use_item(item):
+                        continue
+
             elif action == "escape":
                 line()
+                if self.name == "Raft":
+                    print("You can't escape from this room!")
+                    break
                 print(f"You back in to the {player.previous_location}")
                 player.location = player.previous_location
                 return
