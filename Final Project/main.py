@@ -23,8 +23,8 @@ class Player:
             "mana potion": 0
         }
         self.dead_count = 0
-        self.location = "Start"
-        self.previous_location = "Start"
+        self.location = "Raft"
+        self.previous_location = "Raft"
         self.level = 0
         self.exp = 0
         self.upgrade_points = 0
@@ -287,14 +287,19 @@ class Room:
             line()
             print('Merchant: "comeback again if you interest in our goods!"')
             line()
-        else: 
+        else:
+            print("You have explored everything in this rooms!")
+
+    def travel(self, player):
+        while True:
+
             print(f"Available directions:")
             for connect in self.connections.keys():
                 if rooms[self.connections[connect]].visited == True:
                     print(f"{connect}: {self.connections[connect]}")
                 else:
                     print(f"{connect}: Unknown")
-        while True:
+
             direction = input("Which direction do you want to go? ").lower()
 
             if direction in self.connections:
@@ -361,10 +366,10 @@ class Room:
                 line()
                 if self.name == "Raft":
                     print("You can't escape from this room!")
-                    break
-                print(f"You back in to the {player.previous_location}")
-                player.location = player.previous_location
-                return
+                else:
+                    print(f"You back in to the {player.previous_location}")
+                    player.location = player.previous_location
+                    return
 
             if monsters[self.monster].health > 0:
                 player.take_damage(self.monster)
@@ -565,7 +570,7 @@ weapons = {
 }
 
 rooms = {
-    "Start": Room(
+    "Raft": Room(
         name="Raft",
         description="""You are stranded on a small raft, drifting aimlessly across an endless sea. 
 The mist surrounds you, making it impossible to see more than a few feet ahead. 
@@ -588,7 +593,7 @@ It's a peaceful place, but an ominous feeling lingers in the air, as if somethin
             "coins": 60,
             "exp": 100},
         monster="Crab King",
-        connections={"south": "Start", "north": "Cavern", "west": "Merchant's Hut"}
+        connections={"south": "Raft", "north": "Cavern", "west": "Merchant's Hut"}
     ),
     "Jungle": Room(
         name="Jungle",
@@ -670,7 +675,7 @@ The smell of sulfur fills your nostrils as the ground trembles with the power of
             "exp": 500},
         monster="Fire Drake",
         puzzle="Find the safe path across the lava.",
-        connections={"north": "Jungle", "west": "Start"}
+        connections={"north": "Jungle", "west": "Raft"}
     ),
     "Dragon's Lair": Room(
         name="Dragon's Lair",
@@ -694,10 +699,11 @@ Can you uncover the island's secrets and escape before it's too late?""")
     line()
     print("""You have 5 actions to choose from
 1. Explore: explore the room, if the room is alr clear you can go ahead and enter a new room
-2. Rest: Restore some amount of hp and mana
-3. Inventory: Open your inventory
-4. Upgrade: upgrade your stats
-5. Stat: View your stat""")
+2. Travel: Travel to another room by selecting (North/South/East/West)
+3. Rest: Restore some amount of hp and mana
+4. Inventory: Open your inventory
+5. Upgrade: upgrade your stats
+6. Stat: View your stat""")
     #time.sleep(5)
     line()
     print("Get Ready get your name and start your journey!")
@@ -713,7 +719,7 @@ Can you uncover the island's secrets and escape before it's too late?""")
             print("You win the game\n Congratulations!!!!")
             break
         line()
-        action = input("What will you do? (explore/rest/inventory/upgrade/stat): ").lower()
+        action = input("What will you do? (explore/travel/rest/inventory/upgrade/stat): ").lower()
         if action == "explore":
             rooms[player.location].explore(player)
         elif action == "rest":
@@ -726,6 +732,8 @@ Can you uncover the island's secrets and escape before it's too late?""")
             player.open_inventory()
         elif action == "stat":
             player.stats_view()
+        elif action == "travel":
+            rooms[player.location].travel(player)
 
         if player.dead_count >= 3:
             print("Game Over")
