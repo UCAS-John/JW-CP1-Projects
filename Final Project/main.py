@@ -4,7 +4,7 @@ import time
 def line():
     print("---------------------------------------------------------------------------")
 class Player:
-    def __init__(self, name, health, endurance, speed, mana, damage, crit_damage, crit_chance, coins):
+    def __init__(self, name, health, endurance, speed, mana, damage, crit_damage, crit_chance):
         self.name = name
         self.max_health = health
         self.health = health
@@ -15,7 +15,7 @@ class Player:
         self.damage = damage
         self.crit_damage = crit_damage
         self.crit_chance = crit_chance
-        self.coins = coins
+        self.coins = 0
         self.weapon = None
         self.armor = None
         self.inventory = {
@@ -48,6 +48,7 @@ class Player:
         if not self.armor == None:
             self.max_health -= armors[self.armor].health
         self.max_health += armors[armor].health
+        self.health = self.max_health
         
     def rest(self):
         line()
@@ -122,11 +123,11 @@ class Player:
             print("You Tank the damage!")
 
     def add_to_inventory(self, types, item):
-        if types == "coins":
-            self.coins += item
+        if item == "coins":
+            self.coins += types
             return
-        elif types == "exp":
-            self.earn_exp(item)
+        elif item == "exp":
+            self.earn_exp(types)
             return
         elif types == "essence":
             if item == "damage":
@@ -147,15 +148,21 @@ class Player:
         elif types == "weapon":
             self.weapon = item
             self.max_mana += weapons[item].mana
+        elif types == "special":
+            self.damage *= 2
+            self.max_health *= 2
+            self.health = self.max_health
 
     def stats_view(self):
         line()
         print("This is your current stats")
         print(f"Level: {self.level}")
         print(f"exp: {self.exp}/100")
-        print(f"Health: {self.max_health}")
+        print(f"Max Health: {self.max_health}")
+        print(f"Current Health {self.health}")
         print(f"Endurance: {self.endurance}")
-        print(f"Mana: {self.max_mana}")
+        print(f"Max Mana: {self.max_mana}")
+        print(f"Current Mana: {self.mana}")
         print(f"Damage: {self.damage}")
         print(f"Critical Chance: {self.crit_chance}")
         print(f"Critical Damage: {self.crit_damage}")
@@ -242,11 +249,11 @@ class Room:
         self.item_picked_up = False
         self.monster_defeated = False
         self.merchant_item = {
-            "Broken Dragon's sword": 100,
-            "Lost adventure's armor": 400,
-            "Healing Potion": 30,
-            "Mana potion": 30,
-            "Love leterr???": 1000
+            "broken dragon's sword": {"types": "weapon", "prices": 100},
+            "lost adventure's armor": {"types": "armor", "prices": 400},
+            "healing Potion": {"types": "potion", "prices": 30},
+            "mana potion": {"types": "potion", "prices": 30},
+            "love leterr???": {"types": "special", "prices": 1000}
         }
 
 
@@ -284,16 +291,19 @@ class Room:
                 print(f"{connect}: {self.connections[connect]}")
             else:
                 print(f"{connect}: Unknown")
-        direction = input("Which direction do you want to go? ").lower()
+        while True:
+            direction = input("Which direction do you want to go? ").lower()
 
-        if direction in self.connections:
-            player.previous_location = player.location
-            player.location = self.connections[direction]
-            line()
-            print(f"You enter the {player.location}")
-        else:
-            line()
-            print("Invalid direction. Try again.")
+            if direction in self.connections:
+                player.previous_location = player.location
+                player.location = self.connections[direction]
+                line()
+                print(f"You enter the {player.location}")
+                break
+            else:
+                line()
+                print("Invalid direction. Try again.")
+                continue
 
     def combat(self, player):
         line()
@@ -324,8 +334,8 @@ class Room:
                     if choose_skill not in player.skills.keys():
                         print("invalid skill")
                         continue
-                    if player.mana - player.skills[skill]["mana"] < 0:
-                        print("Not enough mana\n Choose skill again!!!")
+                    if player.mana - player.skills[choose_skill]["mana"] < 0:
+                        print("Not enough mana\nChoose skill again!!!")
                         continue
                     else:
                         monsters[self.monster].health -= player.attack(choose_skill)
@@ -421,16 +431,40 @@ class Room:
 
 
     def interact_with_merchant(self, player):
+
+        line()
         print("Merchant offers the following items for sale:")
 
-        for item, price in self.merchant_item:
-            print(f"{item}: {price} coins")
+        for item in self.merchant_item.keys():
+            print(f"{item}: {self.merchant_item[item]["prices"]} coins")
+        line()
 
-        item_to_buy = input("Which item would you like to buy? ")
+        item_to_buy = input("Which item would you like to buy? ").lower()
 
-        if item_to_buy in self.merchant_item:
-            player.coins -= self.merchant_item[item_to_buy]
-            player.add_to_inventory(item_to_buy)
+        if item_to_buy in self.merchant_item.keys():
+            if self.merchant_item[item_to_buy]["types"] == "potion":
+                line()
+                while True:
+                    try:
+                        amount = int(input("Enter amount of potions you want to buy: "))
+                        break
+                    except ValueError:
+                        print("Please Enter integer amount!")
+                        continue
+
+                if player.coins < self.merchant_item[item_to_buy]["prices"] * amount:
+                    print("Not enough coins!")
+                    user_choice = input("Do you want to interact again? (1 for yes, any key for no): ")
+                    if user_choice == "1":
+                        self.interact_with_merchant(player)
+                    return
+                else:
+                    prices = self.merchant_item[item_to_buy]["prices"] * amount
+            else:
+                prices = self.merchant_item[item_to_buy]["prices"]
+                
+            player.coins -= prices
+            player.add_to_inventory(self.merchant_item[item_to_buy]["types"], item_to_buy)
             print(f"Item {item_to_buy} purchased.")
         else:
             print("Item unavailable.")
@@ -495,7 +529,7 @@ class Monster:
 # Define monsters
 monsters = {
     "Sea Serpent": Monster("Sea Serpent", 120, 5, 25, 10),
-    "Crab King": Monster("Crab King", 300, 10, 20, 25),
+    "Crab King": Monster("Crab King", 300, 10, 35, 25),
     "Jungle Tiger": Monster("Jungle Tiger", 250, 15, 40, 30),
     "Golem Guardian": Monster("Golem Guardian", 500, 20, 20, 5),
     "Ice Dragon": Monster("Ice Dragon", 600, 40, 40, 30),
@@ -643,7 +677,7 @@ def main():
 Upon reaching the mainland, you discover an eerie island with a dangerous dungeon lurking beneath its surface. 
 To survive, you must navigate its dark depths, battle fearsome monsters, and solve challenging puzzles, all while racing against time. 
 Can you uncover the island's secrets and escape before it's too late?""")
-    time.sleep(5)
+    #time.sleep(5)
     line()
     print("""You have 5 actions to choose from
 1. Explore: explore the room, if the room is alr clear you can go ahead and enter a new room
@@ -651,11 +685,11 @@ Can you uncover the island's secrets and escape before it's too late?""")
 3. Inventory: Open your inventory
 4. Upgrade: upgrade your stats
 5. Stat: View your stat""")
-    time.sleep(5)
+    #time.sleep(5)
     line()
     print("Get Ready get your name and start your journey!")
     username = input("Enter your name: ")
-    player = Player(username, 100, 5, 10, 100, 50, 50, 5, 0)
+    player = Player(username, 100, 0, 5, 100, 50, 50, 5)
     print(f"Welcome to the game {username}!\nChoose your action!")
 
     timer = 0  # Track the time in seconds
