@@ -217,7 +217,7 @@ class Player:
             case 1:
                 upgrade = 10*upgrade_point
                 print(f"Your max health increase by {upgrade}")
-                self.max_health += upgrades
+                self.max_health += upgrade
             case 2:
                 upgrade = 10*upgrade_point
                 print(f"Your max mana increase by {upgrade}")
