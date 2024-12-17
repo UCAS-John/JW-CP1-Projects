@@ -1,5 +1,9 @@
 import random
 import time
+import os
+
+def clear():
+    os.system('cls' if os.name == 'nt' else 'clear')
 
 def line():
     print("---------------------------------------------------------------------------")
@@ -205,35 +209,46 @@ class Player:
             print("Please Enter number beetween 1-7") 
             return
         elif stat in range(1, 6):
-            upgrade_point = int(input("Enter amount of upgrade points to use: "))
+            try:
+                upgrade_point = int(input("Enter amount of upgrade points to use: "))
+            except ValueError:
+                print("Please enter an integer")
+                return
             if upgrade_point > self.upgrade_points or upgrade_point < 0:
                 print("Please Enter valid amount of upgrade points")
                 return
-
-        self.upgrade_points -= upgrade_point
-        print(f"You are left with {self.upgrade_points} upgrade points")
 
         match stat:
             case 1:
                 upgrade = 10*upgrade_point
                 print(f"Your max health increase by {upgrade}")
                 self.max_health += upgrade
+                self.upgrade_points -= upgrade_point
+                print(f"You are left with {self.upgrade_points} upgrade points")
             case 2:
                 upgrade = 10*upgrade_point
                 print(f"Your max mana increase by {upgrade}")
                 self.max_mana += upgrade
+                self.upgrade_points -= upgrade_point
+                print(f"You are left with {self.upgrade_points} upgrade points")
             case 3:
                 upgrade = 5*upgrade_point
                 print(f"Your damage increase by {upgrade}")
                 self.damage += upgrade
+                self.upgrade_points -= upgrade_point
+                print(f"You are left with {self.upgrade_points} upgrade points")
             case 4:
                 upgrade = 2*upgrade_point
                 print(f"Your critical chance increase by {upgrade}")
                 self.crit_chance += upgrade
+                self.upgrade_points -= upgrade_point
+                print(f"You are left with {self.upgrade_points} upgrade points")
             case 5:
                 upgrade = 11*upgrade_point
                 print(f"Your critical damage increase by {upgrade}")
                 self.crit_damage += upgrade
+                self.upgrade_points -= upgrade_point
+                print(f"You are left with {self.upgrade_points} upgrade points")
             case 6:
                 gemstone = input("Enter gemstone to upgrade your armor (this action cannot be reverse): ")
                 if gemstone in self.inventory.keys():
@@ -329,7 +344,9 @@ class Room:
 
     def travel(self, player):
         while True:
-
+            if not self.monster_defeated and player.location == "Raft":
+                print("You must defeat monster first in this room")
+                return
             print(f"Available directions:")
             for connect in self.connections.keys():
                 if rooms[self.connections[connect]].visited == True:
@@ -374,9 +391,7 @@ class Room:
                     line()
                     for skill in player.skills.keys(): 
                         print(f"{skill} | Mana {player.skills[skill]["mana"]} | Damage {player.skills[skill]["damage"]}")   
-                    choose_skill = input("Enter your skill (type 'return' to go back): ").lower()
-                    if choose_skill == "return":
-                        self.combat(player)
+                    choose_skill = input("Enter your skill: ").lower()
                     line()
                     if choose_skill not in player.skills.keys():
                         print("invalid skill")
@@ -401,9 +416,10 @@ class Room:
                     print("Potions in inventory:")
                     for potion, amount in player.inventory.items():
                         print(f"{potion}: {amount}")
-                    item = input("Which potion do you want to use? (type 'return' to go back): ").lower()
-                    if item == "return":
-                        self.combat(player)
+                    item = input("Which potion do you want to use? (Enter to skip this action): ").lower()
+                    if action != ["healing potion", "mana potion"]:
+                        ("You done nothing...")
+                        break
                     if not player.use_item(item):
                         continue
 
@@ -748,7 +764,7 @@ def main():
 Upon reaching the mainland, you discover an eerie island with a dangerous dungeon lurking beneath its surface. 
 To survive, you must navigate its dark depths, battle fearsome monsters, and solve challenging puzzles, all while racing against time. 
 Can you uncover the island's secrets and escape before it's too late?""")
-    time.sleep(5)
+    time.sleep(3)
     line()
     print("""You have 6 actions to choose from
 1. Explore: explore the room, if the room is alr clear you can go ahead and enter a new room
@@ -757,7 +773,7 @@ Can you uncover the island's secrets and escape before it's too late?""")
 4. Inventory: Open your inventory
 5. Upgrade: upgrade your stats
 6. Stat: View your stat""")
-    time.sleep(5)
+    time.sleep(3)
     line()
     print("You have 20 minutes to finish the game\nGet Ready get your name and start your journey!")
     username = input("Enter your name: ")
