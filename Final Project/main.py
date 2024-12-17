@@ -734,7 +734,7 @@ The faint sounds of dripping water and echoing footsteps make it feel like you'r
             "coins": 200,
             "exp": 200},
         monster="Cave Bat",
-        connections={"west": "Start", "east": "Lava Pit"}
+        connections={"west": "Raft", "east": "Lava Pit"}
     ),
     "Lava Pit": Room(
         name="Lava Pit",
