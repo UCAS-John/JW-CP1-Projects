@@ -210,11 +210,14 @@ class Player:
                 print("Please Enter valid amount of upgrade points")
                 return
 
+        self.upgrade_points -= upgrade_point
+        print(f"You are left with {self.upgrade_points} upgrade points")
+
         match stat:
             case 1:
                 upgrade = 10*upgrade_point
                 print(f"Your max health increase by {upgrade}")
-                self.max_health += upgrade
+                self.max_health += upgrades
             case 2:
                 upgrade = 10*upgrade_point
                 print(f"Your max mana increase by {upgrade}")
