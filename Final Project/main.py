@@ -33,7 +33,6 @@ class Player:
             "slash": {"mana": 0, "damage": 20},
             "fire": {"mana": 35, "damage": 50},
             "stunt": {"mana": 30, "damage": 10},
-            "heal": {"mana": 0, "damage": 30}
         }
 
     def open_inventory(self):
@@ -54,7 +53,7 @@ class Player:
         line()
         self.heal(self.max_health*0.15)
         self.mana_regen(self.max_mana*0.15)
-        time.sleep(10)
+        time.sleep(5)
     
     def mana_regen(self, mana):
         if self.mana + mana > self.max_mana:
@@ -74,11 +73,11 @@ class Player:
     def attack(self, skill):
 
         skill = skill.lower()
-
-        if skill == "heal":
-            self.heal(self.skills[skill]["damage"])
-            return 0
-
+        if skill == "stunt":
+            damage_dealt = self.skills[skill]["damage"]
+            print(f"You deal {damage_dealt} damage")
+            self.mana -= self.skills[skill]["mana"]
+            return damage_dealt          
         if self.weapon != None:
             weapon = weapons[self.weapon]
             damage = self.damage+weapon.damage
@@ -143,11 +142,26 @@ class Player:
         elif types == "Healing Potion" or types == "Mana Potion":
             self.inventory[types] += item
         elif types == "armor":
+            if self.armor != None:
+                if armors[item].level > armors[self.armor].level:
+                    self.change_armor(item)
+                    self.armor = item
+                else:
+                    line()
+                    print("You already have higher level armor equiq")
+                    return
             self.change_armor(item)
             self.armor = item
+
         elif types == "weapon":
+            if self.weapon != None:
+                if weapons[item].level > weapons[self.weapon].level:
+                    self.weapon = item
+                    self.max_mana += weapons[item].mana
+                else:
+                    line()
+                    print("You already have higher level armor equiq")
             self.weapon = item
-            self.max_mana += weapons[item].mana
         elif types == "special":
             self.damage *= 2
             self.max_health *= 2
@@ -178,19 +192,23 @@ class Player:
         print(f"4. Critical Chance: {self.crit_chance}")
         print(f"5. Critical Damage: {self.crit_damage}")
         print(f"Current upgrade points: {self.upgrade_points}")
+        line()
+        print(f"6. Upgrade Armor: {self.armor}")
+        print(f"7. Upgrade Weapon: {self.weapon}")        
 
         try:
             stat = int(input("Enter number of stats to upgrade: "))
-            upgrade_point = int(input("Enter amount of upgrade points to use: "))
         except ValueError:
             print("Please enter an integers!")
             return
-        if stat not in range(1, 6):
-            print("Please Enter number beetween 1-5") 
+        if stat not in range(1, 8):
+            print("Please Enter number beetween 1-7") 
             return
-        elif upgrade_point > self.upgrade_points or upgrade_point < 0:
-            print("Please Enter valid amount of upgrade points")
-            return
+        elif stat in range(1, 6):
+            upgrade_point = int(input("Enter amount of upgrade points to use: "))
+            if upgrade_point > self.upgrade_points or upgrade_point < 0:
+                print("Please Enter valid amount of upgrade points")
+                return
 
         match stat:
             case 1:
@@ -213,6 +231,18 @@ class Player:
                 upgrade = 11*upgrade_point
                 print(f"Your critical damage increase by {upgrade}")
                 self.crit_damage += upgrade
+            case 6:
+                gemstone = input("Enter gemstone to upgrade your armor (this action cannot be reverse): ")
+                if gemstone in self.inventory.keys():
+                    armors[self.armor].upgrade(gemstone)
+                else:
+                    print("Please enter valid gemstones")
+            case 7:
+                gemstone = input("Enter gemstone to upgrade your weapon (this action cannot be reverse): ")
+                if gemstone in self.inventory.keys():
+                    weapons[self.weapon].upgrade(gemstone)
+                else:
+                    print("Please enter valid gemstones")
 
 
     def earn_exp(self, points):
@@ -221,14 +251,20 @@ class Player:
             self.upgrade_points += (int(self.exp/100)) * 5
             self.level += int(self.exp/100)
             self.exp = self.exp % 100
+            line()
+            print(f"You leveled up level")
+            print(f"Your hp and mana reset!")
+            line()
+            self.mana = self.max_mana
+            self.health = self.max_health
 
     def use_item(self, item):
         if item in self.inventory and self.inventory[item] > 0:
             self.inventory.remove(item)
             if item == "Healing Potion":
-                self.health += 30
+                self.heal(30)
             elif item == "Mana Potion":
-                self.mana += 20
+                self.mana_regen(20)
             print(f"Used {item}")
             return True
         else:
@@ -267,7 +303,6 @@ class Room:
         
         if self.monster != None and not self.monster_defeated:
             self.combat(player)
-
         elif self.puzzle and not self.puzzle_fail:
             print("You encounter a puzzle from the ancient age. You got one try")
             if self.solve_puzzle():
@@ -276,19 +311,18 @@ class Room:
                 player.gain_exp(150)
             else:
                 self.puzzle_fail = True
-
         elif self.merchant:
             print("You found merchant!")
             choice = input("Do you want to interact with him (y/n): ").lower()
             if choice == "y":
                 self.interact_with_merchant(player)
-
         elif self.merchant:
             line()
             print('Merchant: "comeback again if you interest in our goods!"')
             line()
         else:
-            print("You have explored everything in this rooms!")
+            line()
+            print("You have explored everything in this rooms! Travel to the next room using 'travel'")
 
     def travel(self, player):
         while True:
@@ -347,6 +381,14 @@ class Room:
                     if player.mana - player.skills[choose_skill]["mana"] < 0:
                         print("Not enough mana\nChoose skill again!!!")
                         continue
+                    if choose_skill == "stunt":
+                        monsters[self.monster].health -= player.attack(choose_skill)
+                        if random.random() < 60.0/100.0:
+                            print("You stunt the monster!")
+                            continue
+                        else:
+                            print("You failed to stunt the monster...")
+                            break
                     else:
                         monsters[self.monster].health -= player.attack(choose_skill)
                         break
@@ -378,14 +420,18 @@ class Room:
             player.dead_count += 1
             line()
             print(f"You were defeated by the {self.monster}")
+            print(f"You respawwn in to the {player.previous_location}")
+            print(f"You have {2 - player.dead_count} life left")
+            player.location = player.previous_location
             line()
+            return
         else:
             line()
             print(f"You defeated the {self.monster}")
             line()
             self.monster_defeated = True
         
-        if self.loot and not self.item_picked_up:
+        if self.loot and not self.item_picked_up and self.monster_defeated:
             line()
             print("You get rewards for killing monster:")
             for item, types in self.loot.items():
@@ -451,6 +497,7 @@ class Room:
     def interact_with_merchant(self, player):
 
         line()
+        print(f"You have {player.coins} coins")
         print("Merchant offers the following items for sale:")
 
         for item in self.merchant_item.keys():
@@ -492,11 +539,13 @@ class Room:
             self.interact_with_merchant(player)
 
 class weapon:
-    def __init__(self, damage, crit_chance, crit_damage, mana):
+    def __init__(self, damage, crit_chance, crit_damage, mana, level):
         self.damage = damage
         self.crit_chance = crit_chance
         self.crit_damage = crit_damage
         self.mana = mana
+        self.level = level
+
     
     def upgrade(self, gemstone):
         if gemstone == "Ruby":
@@ -507,10 +556,11 @@ class weapon:
             self.crit_chance += 10
         print(f"Upgraded weapon with {gemstone}")
 class armor:
-    def __init__(self, health, endurance, speed):
+    def __init__(self, health, endurance, speed, level):
         self.health = health
         self.endurance = endurance
         self.speed = speed
+        self.level = level
 
     def upgrade(self, gemstone):
         if gemstone == "Ruby":
@@ -547,26 +597,26 @@ class Monster:
 # Define monsters
 monsters = {
     "Sea Serpent": Monster("Sea Serpent", 120, 5, 25, 10),
-    "Crab King": Monster("Crab King", 300, 10, 35, 25),
-    "Jungle Tiger": Monster("Jungle Tiger", 250, 15, 40, 30),
-    "Golem Guardian": Monster("Golem Guardian", 500, 20, 20, 5),
-    "Ice Dragon": Monster("Ice Dragon", 600, 40, 40, 30),
-    "Cave Bat": Monster("Cave Bat", 400, 10, 30, 50),
-    "Fire Drake": Monster("Fire Drake", 800, 40, 50, 30),
-    "Dragon King": Monster("Dragon King", 2500, 60, 80, 60),
+    "Crab King": Monster("Crab King", 550, 10, 30, 25),
+    "Jungle Tiger": Monster("Jungle Tiger", 600, 15, 55, 30),
+    "Golem Guardian": Monster("Golem Guardian", 1000, 20, 20, 5),
+    "Ice Dragon": Monster("Ice Dragon", 1200, 40, 80, 30),
+    "Cave Bat": Monster("Cave Bat", 650, 10, 45, 50),
+    "Fire Drake": Monster("Fire Drake", 600, 40, 40, 30),
+    "Dragon King": Monster("Dragon King", 2800, 60, 200, 60),
 }
 
 armors = {
-    "Leather Armor": armor(50, 10, 5),
-    "Jungle Armor": armor(100, 20, 15),
-    "Lost Adventure's Armor": armor(250, 50, 30)
+    "Leather Armor": armor(50, 10, 5, 1),
+    "Jungle Armor": armor(100, 20, 15, 2),
+    "Lost Adventure's Armor": armor(250, 50, 30, 3)
 }
 
 weapons = {
-    "Wooden Sword": weapon(10, 3, 10, 50),
-    "Shell Sword": weapon(20, 10, 30, 100),
-    "Broken Dragon's sword": weapon(30, 20, 40, 150),
-    "Dragon's sword": weapon(50, 20, 80, 250)
+    "Wooden Sword": weapon(10, 3, 10, 50, 1),
+    "Shell Sword": weapon(20, 10, 30, 100, 2),
+    "Broken Dragon's sword": weapon(30, 20, 40, 150, 3),
+    "Dragon's sword": weapon(50, 20, 80, 250, 4)
 }
 
 rooms = {
@@ -695,25 +745,30 @@ def main():
 Upon reaching the mainland, you discover an eerie island with a dangerous dungeon lurking beneath its surface. 
 To survive, you must navigate its dark depths, battle fearsome monsters, and solve challenging puzzles, all while racing against time. 
 Can you uncover the island's secrets and escape before it's too late?""")
-    #time.sleep(5)
+    time.sleep(5)
     line()
-    print("""You have 5 actions to choose from
+    print("""You have 6 actions to choose from
 1. Explore: explore the room, if the room is alr clear you can go ahead and enter a new room
 2. Travel: Travel to another room by selecting (North/South/East/West)
 3. Rest: Restore some amount of hp and mana
 4. Inventory: Open your inventory
 5. Upgrade: upgrade your stats
 6. Stat: View your stat""")
-    #time.sleep(5)
+    time.sleep(5)
     line()
-    print("Get Ready get your name and start your journey!")
+    print("You have 20 minutes to finish the game\nGet Ready get your name and start your journey!")
     username = input("Enter your name: ")
     player = Player(username, 100, 0, 5, 100, 50, 50, 5)
     print(f"Welcome to the game {username}!\nChoose your action!")
 
-    timer = 0  # Track the time in seconds
+    while player.dead_count < 3:
 
-    while player.dead_count < 3 and timer <= 1800:
+        start_time = time.time()
+        time_limit = 20 * 60  
+
+        elapsed_time = time.time() - start_time
+        if elapsed_time >= time_limit:
+            break
 
         if rooms["Dragon's Lair"].monster_defeated:
             print("You win the game\n Congratulations!!!!")
@@ -723,7 +778,8 @@ Can you uncover the island's secrets and escape before it's too late?""")
         if action == "explore":
             rooms[player.location].explore(player)
         elif action == "rest":
-            print("You are resting this action take 10 seconds!")
+            line()
+            print("You are resting this action take 5 seconds!")
             print("You rest and gain back 15% of hp and mana")
             player.rest()
         elif action == "upgrade":
